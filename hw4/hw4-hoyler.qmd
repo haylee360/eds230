@@ -29,7 +29,8 @@ source(here("hw4/Catm.R"))
 np <- 1000
 k_o <- rnorm(mean = 0.1, sd = 0.1 * 0.01, n = np)
 k_d <- rnorm(mean = 0.7, sd = 0.7 * 0.01, n = np)
-v <- rnorm(mean = 300, sd = 50, n = np)
+# Changing the units here because of the discussion we had in section
+v <- rnorm(mean = 3, sd = .5, n = np)
 height <- runif(min = 3.5, max = 5.5, n = np)
 
 X1 <- cbind.data.frame(k_o, k_d, v, height = height)
@@ -37,7 +38,8 @@ X1 <- cbind.data.frame(k_o, k_d, v, height = height)
 # repeat sampling
 k_o <- rnorm(mean = 0.1, sd = 0.1 * 0.01, n = np)
 k_d <- rnorm(mean = 0.7, sd = 0.7 * 0.01, n = np)
-v <- rnorm(mean = 300, sd = 50, n = np)
+# Changing the units here because of the discussion we had in section
+v <- rnorm(mean = 3, sd = .5, n = np)
 height <- runif(min = 3.5, max = 5.5, n = np)
 
 X2 <- cbind.data.frame(k_o, k_d, v, height = height)
@@ -80,32 +82,36 @@ print(sens_Catm_Sobol)
 NEED TO DO THIS FIRST PLOT!! Not sure if the histogram is enough...
 Plot conductance estimates in a way that accounts for parameter uncertainty. 
 Plot conductance estimates against windspeed use the parameter that is 2nd in terms of total effect on response
+
+RES BECOMES YOUR Y!!
 ```{r}
 # graph two most sensitive parameters
-both <- cbind.data.frame(parms, gs = sens_Catm_Sobol$y)
 
-# look at overall gs sensitvity to uncertainty
-ggplot(both, aes(x = gs)) +
+both <- cbind.data.frame(parms, output = sens_Catm_Sobol$y)
+
+# x = output
+# look at overall output? gs sensitvity to uncertainty
+ggplot(both, aes(x = output)) +
   geom_histogram() +
   geom_vline(xintercept = mean(both$gs), col = "cyan")
 
 # THIS FIRST GRAPH IS THE ONE WE WANT ! 
 # look at response of conductance to the two interesting variables
-ggplot(both, aes(v, gs, col = height)) +
+ggplot(both, aes(v, output, col = height)) +
   geom_point() +
   labs(y = "Conductance (mm/s)", x = "Windspeed")
 
 # look at response of conductance to the two interesting variables
-ggplot(both, aes(height, gs, col = v)) +
+ggplot(both, aes(height, output, col = v)) +
   geom_point() +
   labs(y = "Conductance (mm/s)", x = "Height")
 
 # look at response of conductance to the two most important variables
-ggplot(both, aes(k_d, gs, col = k_o)) +
+ggplot(both, aes(k_d, output, col = k_o)) +
   geom_point() +
   labs(y = "Conductance (mm/s)", x = "k_d parameter")
 # use second most sensitive parameter (using most important as color)
-ggplot(both, aes(k_o, gs, col = k_d)) +
+ggplot(both, aes(k_o, output, col = k_d)) +
   geom_point() +
   labs(y = "Conductance (mm/s)", x = "k_d parameter")
 ```
@@ -134,6 +140,25 @@ sens_Catm_Sobol2$T
 # parameters are in order, interactiosn are small here
 sens_Catm_Sobol2$S2
 ```
+
+SobolSalt
+
+X: a data.frame containing the design of experiments.
+
+y: the response used.
+
+V: the model variance.
+
+S: the estimations of the Sobol' first-order indices.
+
+S2: the estimations of the Sobol' second-order indices (only for scheme "B").
+
+T: the estimations of the Sobol' total sensitivity indices
+
+Total indices includes interaction. 
+What does second order mean? More interaction stuff based on S2 object...
+Second order the same except! You use scheme='B'
+
 
 ### Conclusions
 Comment on what this tells you about how atmospheric conductance and its sensitivity to variation in windspeed differs in this setting as compared to the setting that we examined in class where windspeed was lower and less variable and vegetation was taller.
