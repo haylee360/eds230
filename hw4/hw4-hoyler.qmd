@@ -166,3 +166,5 @@ Comment on what this tells you about how atmospheric conductance and its sensiti
 In the example we did in class, `kd` (the scalar for zero plane displacement) was the parameter our atmospheric conductance model was most sensitive to. `ko` and `windspeed` were the next most important and they had similar coefficients. `height` was the parameter the model was least sensitive to. 
 
 Now that we've changed the parameters and inputs such that windspeeds are higher and more variable and vegetation is shorter. 
+
+
