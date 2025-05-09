@@ -108,7 +108,7 @@ sens_C
 ```{r}
 # now use pmap as we did before
 sens_results <- as.data.frame(sens_C$X) %>% pmap()
-allresults <- as.data.frame(sens_P$X) %>% pmap(p_wrapper, Pinitial = Pinitial, simtimes = simtimes, odefunc = dpopgrowth, metricfunc = compute_metrics)
+# allresults <- as.data.frame(sens_C$X) %>% pmap(Cinitial = Cinitial, simtimes = simtimes, odefunc = dforestgrowth, metricfunc = compute_metrics)
 
 # extract out results from pmap into a data frame
 allres <- allresults %>% map_dfr(`[`, c("maxpop", "threshyear"))
