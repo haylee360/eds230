@@ -1,6 +1,6 @@
 ---
 title: "Dynamic ODE model"
-author: "Haylee Oyler"
+author: "Haylee Oyler, Jo Cardelle"
 format: 
   html:
     embed-resources: true
@@ -23,9 +23,9 @@ library(deSolve)
 library(sensitivity)
 library(here)
 
-source(here("hw7/week6/dforestgrowth.R"))
-source(here("hw7/week6/maxforest.R"))
-source(here("hw7/week6/maxforestwrapper.R"))
+source(here("hw5/dforestgrowth.R"))
+source(here("hw5/maxforest.R"))
+source(here("hw5/maxforestwrapper.R"))
 
 ```
 
