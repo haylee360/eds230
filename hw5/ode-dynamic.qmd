@@ -1,0 +1,157 @@
+---
+title: "Dynamic ODE model"
+author: "Haylee Oyler, Jo Cardelle"
+format: 
+  html:
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+Consider the following model of forest growth (where forest size in measured ni units of carbon (C)) 
+
+• dC/dt = r * C' for forests where C is below a threshold canopy closure
+• dC/dt = g* 1( - C/K) for forests where carbon is at or above the threshold canopy closure
+• K is a carrying capacity in units of carbon
+
+The size of the forest (C), Canopy closure threshold and carrying capacity are al ni units of carbon You could think of the canopy closure threshold as the size of the forest at which growth rates change from exponential to linear You can think of r, as early exponential growth rate and gas the linear growth rate once canopy closure has been reached
+
+```{r}
+library(tidyverse)
+library(deSolve)
+library(sensitivity)
+library(here)
+
+source(here("hw5/dforestgrowth.R"))
+source(here("hw5/maxforest.R"))
+source(here("hw5/maxforestwrapper.R"))
+
+```
+
+
+### Forest Growth Model
+
+```{r}
+# Initial population
+Cinitial <- c(C=10)
+
+# Time period over 300 years
+simtimes <- seq(from = 1, to = 300)
+
+# List of parameters
+parms <- list(r = 0.01,
+              g = 2,
+              K = 250,
+              thresh = 50)
+
+# Run the ODE model
+result <- ode(y = Cinitial, times = simtimes, func = dforestgrowth, parms = parms)
+```
+
+## Graphing the Forest Growth Model
+
+```{r}
+# Graph forest growth over time
+ggplot(result, aes(time, C)) +
+  geom_line() +
+  geom_hline(yintercept = 50, col = "red") +
+  labs(y = "Forest Size (Kg carbon)", 
+       title = "Forest Growth Model over 300 Years",
+       x = "Years") +
+  theme_minimal()
+```
+
+## Sobol Sensitivity Analysis
+
+```{r}
+# Set initial population 
+Cinitial <- 10
+
+# Create parameter distributions
+np <- 2000
+K <- rnorm(mean = 250, sd = 25, n = np)
+r <- rnorm(mean = 0.01, sd = 0.001, n = np)
+g <- rnorm(mean = 0.2, sd = 0.02, n = np)
+X1 <- cbind.data.frame(r = r, K = K, g = g)
+# We don't vary thresh so add it here statically
+X1 <- X1 %>% 
+  mutate(thresh = 50)
+ 
+# Repeat for second set of samples
+np <- 2000
+K <- rnorm(mean = 250, sd = 25, n = np)
+r <- rnorm(mean = 0.01, sd = 0.001, n = np)
+g <- rnorm(mean = 0.2, sd = 0.02, n = np)
+X2 <- cbind.data.frame(r = r, K = K, g = g)
+# We don't vary thresh so add it here statically
+X2 <- X2 %>% 
+  mutate(thresh = 50)
+
+# Fix any negative values and they are not meaningful
+X1 <- X1 %>% map_df(pmax, 0.0)
+X2 <- X2 %>% map_df(pmax, 0.0)
+
+# Run the sobol analysis
+sens_C <- sobolSalt(model = NULL, X1, X2, nboot = 300)
+
+# Add parameter names
+colnames(sens_C$X) <- c("r", "K", "g", "thresh")
+head(sens_C$X)
+```
+
+### Use Wrapper Function
+The metric we're looking for here is max forest growth. We'll use the functionized version of the `max` and a wrapper function to calculate this value for our model. 
+
+```{r}
+# List parameters and format for pmap
+parms <- list(r = sens_C$X[, "r"], 
+               g = sens_C$X[, "g"],
+               K = sens_C$X[, "K"],
+               thresh = sens_C$X[, "thresh"])
+
+# Map parameters onto ODE forest growth function
+allresults <- parms %>% pmap(maxforestwrapper, Cinitial = c(C = 10), times = simtimes, growth_func = dforestgrowth, max_func = maxforest)
+
+# Extract results and store in a data frame
+allres <- allresults %>%
+  map_dfr(~ tibble(max_c = .x[[1]]))
+```
+
+### Plotting Sobol Results
+
+```{r}
+# Retrieve maximum forest size from the sobol output
+max_forest <- sens_C$y
+
+# Pivot longer for plotting
+allres_long <- allres %>% 
+  pivot_longer(cols = everything(), 
+               names_to = "max_forest", 
+               values_to = "value")
+
+# Visualize results
+ggplot(allres_long) + 
+  geom_boxplot(aes(x = max_forest, y = value)) +
+  labs(title = "Sobol Analysis of Maximum Forest Size",
+       y = "Maximum Forest Size (Kg C)",
+       x = "") +
+  theme_minimal()
+```
+### Sobel Indices
+```{r}
+# Get indices for max forest
+sens_Cmax <- sensitivity::tell(sens_C, allres$max_c)
+
+# First-order indices 
+rownames(sens_Cmax$S) <- c("r", "g", "K", "thresh")
+print(sens_Cmax$S)
+
+# Total sensitivity index
+rownames(sens_Cmax$T) <- c("r", "g", "K", "thresh")
+print(sens_Cmax$T)
+```
+
+### Conclusions
+
+From the results of our Sobol analysis, the model is most sensitive to the growth rate r and next most sensitive to the carrying capacity K. It has no significant sensitivity to thresh, which makes sense because we did not vary it. It also has a small sensitivity to the growth rate g. We see similar results across both the first order indices and the total sensitivity index, although they are orders of magnitude apart from each other. Climate change could have a large impact on the most sensitive parameters. For example, higher amounts of CO2 in the atmosphere could increase the growth rate r, or drier overall conditions could affect what the carrying capacity in a locale is.
