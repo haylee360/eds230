@@ -9,17 +9,7 @@ execute:
   message: false
 ---
 
-With the msage.RDS data set that we've been working with in class
-
-develop another metric of performance (different from in-class example)
-apply to all runs in the dataset
-find the "best" parameter set based on your metric
-decide on a threshold for acceptability 
-plot results for all acceptable parameters
-choose a plot that shows model performance in a way that fits your metric
-Submit Quarto document and knitted pdf
-
-Also submit best parameter set to Calibration Quiz as your answer
+I've decided to use high flow as my new metric!
 
 ```{r}
 library(tidyverse)
@@ -61,30 +51,27 @@ ggplot(resultsl, aes(metric, value)) +
   facet_wrap(~metric, scales="free")
 ```
 
-```{r}
-
-```
-
 
 ```{r}
-# pick parameter set with greatest high flow month correlation
+# Find parameter set with greatest high flow month correlation
 best_par2 = which.max(results$high_month_cor)
 best_par2
 ```
 
 ```{r}
-# interesting to look at range of metrics - could use this to decide on
-# acceptable values
+# Find a range of acceptable values
 summary(results)
 ```
-
+We will use the summary stats here to pick a threshold for acceptability.
 ```{r}
-# first we need to be able to identify parameter sets in results
+# Add parameter set IDs
+ID = msage %>% 
+  select(-date, -month, -day, -year, -wy, -obs ) %>%  
+  colnames()
 
-ID = msage %>% select(-date, -month, -day, -year, -wy, -obs ) %>%  colnames()
 results$id = ID
 
-# now we can pick only good parameters
+# Select best parameters based on summary statistics
 accept_par = subset(results, annual_max_cor > 0.8 & high_month_cor > 0.8 & abs(annual_max_err < 2.9) & abs(high_month_err) < 7.6)
 nrow(accept_par)
 
@@ -93,7 +80,7 @@ msagel$accept = ifelse(msagel$run %in% accept_par$id, TRUE, FALSE)
 ggplot(subset(msagel, accept), aes(as.Date(date), str)) + 
   geom_line()
 
-# or with observed but focus on August flow
+# or with observed but focus on may flow
 msagel_mth = msagel %>% select(-date,-day) %>%  
   group_by(month, wy, run, accept) %>% 
   summarise(str = mean(str, na.rm = T), obs = mean(obs, na.rm = T))
@@ -106,6 +93,7 @@ ggplot(subset(msagel_mth,  month == 5 & accept),
   labs(y="Streamflow", 
        x="Date")
 
+# Calculate the mean may value for plotting
 mean_may_obs = mean(subset(msagel_mth, month == 5)$obs) 
 
 ggplot(subset(msagel_mth, month == 5), aes(accept, str)) + 
