@@ -9,7 +9,7 @@
 #' @param high_flow_months which to use default (May 5)
 #' @return annual_max_err, annual_max_corr, high_month_cor, high_month_err
 
-compute_lowflowmetrics <- function(m, o, month, day, year, wy, high_flow_months = 5) {
+compute_highflowmetrics <- function(m, o, month, day, year, wy, high_flow_months = 5) {
   flow <- cbind.data.frame(m, o, month, day, year, wy)
   
   # Get maximum yearly values
