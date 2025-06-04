@@ -1,0 +1,43 @@
+---
+title: "Calibration"
+author: "Haylee Oyler"
+format: 
+  html:
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+With the msage.RDS data set that we've been working with in class
+
+develop another metric of performance (different from in-class example)
+apply to all runs in the dataset
+find the "best" parameter set based on your metric
+decide on a threshold for acceptability 
+plot results for all acceptable parameters
+choose a plot that shows model performance in a way that fits your metric
+Submit Quarto document and knitted pdf
+
+Also submit best parameter set to Calibration Quiz as your answer
+
+```{r}
+library(tidyverse)
+library(here)
+
+source(here("R/compute_highflowmetrics.R"))
+```
+
+```{r}
+# Read in data
+msage = readRDS(here("Data/msage.RDS"))
+
+# Rearrange to plot all results
+msagel = msage %>% gather(key="run",value="str", -date, -month, -day, -year, -wy,-obs)
+
+ggplot(msagel) +
+    geom_line(aes(x = month, y = obs))
+```
+
+While low flow is at a minimum in august and september, high flow seems to peak in May and June. Let's compute high flow metrics for May. 
+
