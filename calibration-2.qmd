@@ -87,7 +87,6 @@ msagel_acc <- subset(msagel, sim %in% results_acc$sim)
 
 # join with weights from res_acc, left_join will repeat weights for each day in streamflow trajectory
 msagel_acc <- left_join(msagel_acc, results_acc, by = "sim")
-head(msagel_acc)
 
 # finally multiply flow by weight
 msagel_acc <- msagel_acc %>% mutate(str_wt = str * wt_acc)
@@ -112,7 +111,7 @@ aver_flowl = aver_flow %>% pivot_longer(
 ```{r}
 ggplot(aver_flowl, aes(x = date, y = str, col=type)) +
   geom_line() +
-  labs(title = "Observations and MSE over time",
+  labs(title = "Observations and MLE over time",
        y = "Streamflow (mm/day)",
        x = "Time (years)") +
   theme_minimal()
@@ -120,7 +119,7 @@ ggplot(aver_flowl, aes(x = date, y = str, col=type)) +
 # add some of the other date info and plot a subset
 wycheck <- 1985
 ggplot(subset(aver_flowl, wy == wycheck), aes(x = date, y = str, col=type)) +  
-  labs(title = "Observations and MSE over time during 1985 check year",
+  labs(title = "Observations and MLE over time during 1985 check year",
        y = "Streamflow (mm/day)",
        x = "Time (years)") +
   geom_line() +
@@ -157,15 +156,21 @@ mse_flow_all = left_join(mse_flow_all, mse_flow, by = c("wy", "month"), suffix =
 
 # see the impact of calibration
 tmp = mse_flow_all %>% subset(month == 5) 
-cor(tmp$str_mse_all, tmp$obs)
-cor(tmp$str_mse_mse, tmp$obs)
+may_mse_cor_all <- cor(tmp$str_mse_all, tmp$obs)
+may_mse_cor <- cor(tmp$str_mse_mse, tmp$obs)
 
+print(paste0("May Correlation between MLE and Observations: ", round(may_mse_cor, 4)))
+print(paste0("May Correlation between All Simulations MLE and Observations: ", round(may_mse_cor_all, 4)))
 # but what about across all months
-cor(mse_flow_all$str_mse_all, mse_flow_all$obs)
-cor(mse_flow_all$str_mse_mse, mse_flow_all$obs)
+month_mse_cor_all <- cor(mse_flow_all$str_mse_all, mse_flow_all$obs)
+month_mse_cor <- cor(mse_flow_all$str_mse_mse, mse_flow_all$obs)
+
+print(paste0("All Months Correlation between MLE and Observations: ", round(month_mse_cor, 4)))
+print(paste0("All Months Correlation between All Simulations MLE and Observations: ", round(month_mse_cor_all, 4)))
 ```
 
 ```{r}
+# Plot results
 p1 <- ggplot(subset(msagel_acc_month, month == 5), aes(wy, str, group = wy)) +
   geom_boxplot(position = "dodge") +
   geom_point(aes(wy, obs), col = "red") +
